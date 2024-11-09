@@ -8,7 +8,8 @@ export const sendNotification = async (playerId, title, message) => {
         app_id: process.env.ONESIGNAL_APP_ID,
         include_player_ids: [playerId],
         contents: { en: message },
-        headings: { en: title }
+        headings: { en: title },
+        data: data,
       },
       {
         headers: {
