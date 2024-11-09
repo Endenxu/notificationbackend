@@ -1,6 +1,5 @@
 import axios from 'axios';
-
-export const sendNotification = async (playerId, title, message) => {
+export const sendNotification = async (playerId, title, message, additionalData = {}) => {
   try {
     const response = await axios.post(
       'https://onesignal.com/api/v1/notifications',
@@ -9,7 +8,7 @@ export const sendNotification = async (playerId, title, message) => {
         include_player_ids: [playerId],
         contents: { en: message },
         headings: { en: title },
-        data: data,
+        data: additionalData,  // Now properly passing the additional data
       },
       {
         headers: {
