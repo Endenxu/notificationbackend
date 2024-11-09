@@ -10,7 +10,15 @@ const DeviceSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  deviceInfo: String,
+  deviceInfo: {
+    platform: String,
+    model: String,
+    version: String
+  },
+  tags: {
+    type: Map,
+    of: String
+  },
   createdAt: { 
     type: Date, 
     default: Date.now 
