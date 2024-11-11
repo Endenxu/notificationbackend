@@ -1,6 +1,16 @@
 import axios from 'axios';
+
 export const sendNotification = async (playerId, title, message, additionalData = {}) => {
   try {
+    if (!process.env.ONESIGNAL_APP_ID || !process.env.ONESIGNAL_REST_API_KEY) {
+      throw new Error('OneSignal configuration missing');
+    }
+
+    // Validate inputs
+    if (!playerId || !title || !message) {
+      throw new Error('Missing required notification parameters');
+    }
+
     const response = await axios.post(
       'https://onesignal.com/api/v1/notifications',
       {
@@ -8,7 +18,7 @@ export const sendNotification = async (playerId, title, message, additionalData 
         include_player_ids: [playerId],
         contents: { en: message },
         headings: { en: title },
-        data: additionalData,  // Now properly passing the additional data
+        data: additionalData,
       },
       {
         headers: {
@@ -17,9 +27,10 @@ export const sendNotification = async (playerId, title, message, additionalData 
         }
       }
     );
+
     return response.data;
   } catch (error) {
     console.error('OneSignal API error:', error);
-    throw error;
+    throw new Error('Failed to send notification through OneSignal');
   }
 };
