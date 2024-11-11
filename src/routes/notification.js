@@ -53,51 +53,59 @@ router.delete('/devices/:userId', async (req, res) => {
 });
 
 router.post('/notify-file-upload', async (req, res) => {
-    try {
-      const { 
-        receiverId,      // The user who needs to authenticate (Hugh)
-        senderId,        // The user who uploaded (Test1)
-        fileName,
-        fileId
-      } = req.body;
-      
-      // Find receiver's device
-      const receiverDevice = await Device.findOne({ userId: receiverId });
-      if (!receiverDevice) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Receiver device not found' 
-        });
-      }
-  
-      // Find sender's info for the notification
-      const senderDevice = await Device.findOne({ userId: senderId });
-      
-      // Prepare notification content with more professional message
-      const title = 'Document Authentication Required';
-      const message = `A new document "${fileName}" requires your review`;
-      
-      // Send notification with minimal data
-      const result = await sendNotification(
-        receiverDevice.playerId,
-        title,
-        message,
-        {
-          fileId: fileId,
-          type: 'file_authentication',
-          senderId: senderId,
-          senderName: senderDevice?.deviceInfo?.userName || 'Unknown User'
-        }
-      );
-  
-      res.json({ success: true, result });
-    } catch (error) {
-      console.error('Error sending file upload notification:', error);
-      res.status(500).json({ 
+  try {
+    const { 
+      receiverId,
+      senderId,
+      fileName,
+      fileId,
+      additionalData  // New additional data structure
+    } = req.body;
+    
+    // Find receiver's device
+    const receiverDevice = await Device.findOne({ userId: receiverId });
+    if (!receiverDevice) {
+      return res.status(404).json({ 
         success: false, 
-        error: 'Failed to send notification' 
+        error: 'Receiver device not found' 
       });
     }
-  });
+
+    // Find sender's info for the notification
+    const senderDevice = await Device.findOne({ userId: senderId });
+    
+    // Prepare notification content
+    const title = 'Document Authentication Required';
+    const message = `A new document "${fileName}" requires your review`;
+    
+    // Send notification with complete data structure
+    const result = await sendNotification(
+      receiverDevice.playerId,
+      title,
+      message,
+      {
+        workflowId: additionalData.workflowId,
+        fileId: additionalData.fileId,
+        fileName: additionalData.fileName,
+        uniqueCode: additionalData.uniqueCode,
+        description: additionalData.description,
+        uploadDate: additionalData.uploadDate,
+        ownerDetails: additionalData.ownerDetails,
+        type: 'file_authentication',
+        senderId: senderId,
+        senderName: senderDevice?.deviceInfo?.userName || 'Unknown User'
+      }
+    );
+
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error('Error sending file upload notification:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to send notification',
+      details: error.message 
+    });
+  }
+});
 
 export default router;
