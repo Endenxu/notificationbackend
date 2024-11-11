@@ -1,8 +1,6 @@
 import express from 'express';
 import Device from '../models/Device.js';
 import { sendNotification } from '../services/oneSignal.js';
-import { validateToken } from '../middleware/auth.js'; // You'll need to implement this
-
 const router = express.Router();
 
 // Middleware to validate requests
@@ -60,6 +58,23 @@ router.post('/devices', validateRequest, async (req, res) => {
       success: false, 
       error: 'Failed to register device' 
     });
+  }
+});
+
+// Send notification
+router.post('/notify', validateRequest, async (req, res) => {
+  try {
+    const { userId, title, message } = req.body;
+    
+    const device = await Device.findOne({ userId });
+    if (!device) {
+      return res.status(404).json({ success: false, error: 'Device not found' });
+    }
+    const result = await sendNotification(device.playerId, title, message);
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    res.status(500).json({ success: false, error: 'Failed to send notification' });
   }
 });
 
@@ -123,7 +138,7 @@ router.post('/notify-file-upload', validateRequest, async (req, res) => {
   }
 });
 
-// Delete device with validation
+// Delete device
 router.delete('/devices/:userId', validateRequest, async (req, res) => {
   try {
     const { userId } = req.params;
