@@ -61,7 +61,7 @@ router.post('/devices', validateRequest, async (req, res) => {
   }
 });
 
-// Send notification
+// Send notification for Test only
 router.post('/notify', validateRequest, async (req, res) => {
   try {
     const { userId, title, message } = req.body;
@@ -78,7 +78,7 @@ router.post('/notify', validateRequest, async (req, res) => {
   }
 });
 
-// Send file upload notification
+// Send file upload notification to the target user Device (Where User login)
 router.post('/notify-file-upload', validateRequest, async (req, res) => {
   try {
     const { 
@@ -104,7 +104,7 @@ router.post('/notify-file-upload', validateRequest, async (req, res) => {
       });
     }
 
-    // Sanitize notification data
+    // Sanitize notification data (This for navigation (for pressing the push notifciation to Notification Detials) but its not working yet).
     const sanitizedData = {
       workflowId: additionalData.workflowId,
       fileId: additionalData.fileId,
