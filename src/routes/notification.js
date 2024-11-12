@@ -61,7 +61,7 @@ router.post('/devices', validateRequest, async (req, res) => {
   }
 });
 
-// Send notification for Test only
+// Send notification
 router.post('/notify', validateRequest, async (req, res) => {
   try {
     const { userId, title, message } = req.body;
@@ -78,7 +78,7 @@ router.post('/notify', validateRequest, async (req, res) => {
   }
 });
 
-// Send file upload notification to the target user Device (Where User login)
+// Send file upload notification
 router.post('/notify-file-upload', validateRequest, async (req, res) => {
   try {
     const { 
@@ -104,8 +104,8 @@ router.post('/notify-file-upload', validateRequest, async (req, res) => {
       });
     }
 
-    // Sanitize notification data (This for navigation (for pressing the push notifciation to Notification Detials) but its not working yet).
-    const sanitizedData = {
+    // Enhanced notification data with required flags
+    const notificationData = {
       workflowId: additionalData.workflowId,
       fileId: additionalData.fileId,
       fileName: additionalData.fileName,
@@ -115,17 +115,36 @@ router.post('/notify-file-upload', validateRequest, async (req, res) => {
       ownerDetails: {
         ownerUser: sanitizeUserData(additionalData.ownerDetails?.ownerUser),
         authRequiredFromUser: sanitizeUserData(additionalData.ownerDetails?.authRequiredFromUser)
-      }
+      },
+      // Include all required fields for NotificationDetails screen
+      id: additionalData.workflowId,
+      fileUniqueCode: additionalData.uniqueCode,
+      fileDescription: additionalData.description,
+      startDate: additionalData.uploadDate,
+      responsibleName: additionalData.ownerDetails?.authRequiredFromUser?.displayName || '',
+      responsibleArabicName: additionalData.ownerDetails?.authRequiredFromUser?.arabicDisplayName || '',
+      fileOwnerName: additionalData.ownerDetails?.ownerUser?.displayName || '',
+      fileOwnerArabicName: additionalData.ownerDetails?.ownerUser?.arabicDisplayName || '',
+      notes: '',
+      status: 0,
+      stepNumber: 1,
+      // Authorization flags
+      authRequired: true,
+      canForward: true,
+      canChangeResponsibleByManager: true,
+      canReject: true
     };
 
-    const title = 'Document Authentication Required';
-    const message = `A new document "${fileName}" requires your review`;
+    const title = 'New Document Authentication Required';
+    const message = `Document "${fileName}" requires your authorization`;
+
+    console.log('Sending notification with data:', JSON.stringify(notificationData, null, 2));
 
     const result = await sendNotification(
       receiverDevice.playerId,
       title,
       message,
-      sanitizedData
+      notificationData
     );
 
     res.json({ success: true, result });

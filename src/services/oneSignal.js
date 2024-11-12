@@ -1,22 +1,38 @@
 import axios from 'axios';
 
+// Sanitize user data helper function
+const sanitizeUser = (user) => user ? {
+  id: user.id,
+  displayName: user.displayName,
+  arabicDisplayName: user.arabicDisplayName
+} : null;
+
+// Main notification sending function
 export const sendNotification = async (playerId, title, message, additionalData = {}) => {
   try {
-    // Check if the required OneSignal configuration variables are set
-    // If not, throw an error indicating that the configuration is missing
+    // Validate OneSignal configuration
     if (!process.env.ONESIGNAL_APP_ID || !process.env.ONESIGNAL_REST_API_KEY) {
       throw new Error('OneSignal configuration missing');
     }
 
-    // Validate the required input parameters
-    // If any of the required parameters (playerId, title, message) are missing, throw an error
+    // Validate required inputs
     if (!playerId || !title || !message) {
       throw new Error('Missing required notification parameters');
     }
 
-    // Send a POST request to the OneSignal API to create a new notification
-    // The request payload includes the OneSignal app ID, the player ID of the target device,
-    // the notification content (message), title, and any additional data
+    // Prepare notification data
+    const sanitizedData = {
+      ...additionalData,
+      // Ensure these required flags are present
+      authRequired: true,
+      canForward: true,
+      canChangeResponsibleByManager: true,
+      canReject: true,
+      status: additionalData.status || 0,
+      stepNumber: additionalData.stepNumber || 1
+    };
+
+    // Send notification through OneSignal
     const response = await axios.post(
       'https://onesignal.com/api/v1/notifications',
       {
@@ -24,22 +40,24 @@ export const sendNotification = async (playerId, title, message, additionalData 
         include_player_ids: [playerId],
         contents: { en: message },
         headings: { en: title },
-        data: additionalData,
+        data: sanitizedData
       },
       {
         headers: {
-          // Set the authorization header using the OneSignal REST API key
           'Authorization': `Basic ${process.env.ONESIGNAL_REST_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
     );
 
-    // Return the response data from the OneSignal API
+    console.log('OneSignal notification sent successfully:', {
+      playerId,
+      title,
+      notificationData: sanitizedData
+    });
+
     return response.data;
   } catch (error) {
-    // If an error occurs during the request or if the OneSignal configuration is missing,
-    // log the error and throw a new error indicating the failure to send the notification
     console.error('OneSignal API error:', error);
     throw new Error('Failed to send notification through OneSignal');
   }
