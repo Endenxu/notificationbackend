@@ -1,12 +1,19 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
+import fs from 'fs';
 import { connectDB } from './config/database.js';
 import notificationRoutes from './routes/notification.js';
 
 dotenv.config();
-
 const app = express();
+
+// Create a write stream for the log file
+const accessLogStream = fs.createWriteStream('./access.log', { flags: 'a' });
+
+// Use morgan to log requests
+app.use(morgan('combined', { stream: accessLogStream }));
 
 // Middleware
 app.use(cors());
